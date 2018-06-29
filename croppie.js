@@ -519,6 +519,12 @@
             document.body.style[CSS_USERSELECT] = 'none';
         }
 
+        var MOVE_HANDLERS={
+            "h": moveHandlerMirroredE,
+            "v": moveHandlerMirroredS
+
+        }
+
         function mouseMove(ev) {
             var pageX = ev.pageX;
             var pageY = ev.pageY;
@@ -536,36 +542,7 @@
             var newHeight = self.options.viewport.height + deltaY;
             var newWidth = self.options.viewport.width + deltaX;
 
-            if (direction === 'v' && newHeight >= minSize && newHeight <= maxHeight) {
-                css(wrap, {
-                    height: newHeight + 'px'
-                });
-
-                self.options.boundary.height += deltaY;
-                css(self.elements.boundary, {
-                    height: self.options.boundary.height + 'px'
-                });
-
-                self.options.viewport.height += deltaY;
-                css(self.elements.viewport, {
-                    height: self.options.viewport.height + 'px'
-                });
-            }
-            else if (direction === 'h' && newWidth >= minSize && newWidth <= maxWidth) {
-                css(wrap, {
-                    width: newWidth + 'px'
-                });
-
-                self.options.boundary.width += deltaX;
-                css(self.elements.boundary, {
-                    width: self.options.boundary.width + 'px'
-                });
-
-                self.options.viewport.width += deltaX;
-                css(self.elements.viewport, {
-                    width: self.options.viewport.width + 'px'
-                });
-            }
+            MOVE_HANDLERS[direction].call(self, pageX, pageY, deltaX, deltaY, newHeight, newWidth);
 
             _updateOverlay.call(self);
             _updateZoomLimits.call(self);
@@ -574,6 +551,68 @@
             originalY = pageY;
             originalX = pageX;
         }
+
+        function moveHandlerMirroredE(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+            console.log("wooooottt")
+            if(!(newHeight >= minSize && newHeight <= maxHeight)){
+                return;
+            }
+            css(wrap, {
+                width: newWidth + 'px'
+            });
+
+            self.options.boundary.width += deltaX;
+            css(self.elements.boundary, {
+                width: self.options.boundary.width + 'px'
+            });
+
+            self.options.viewport.width += deltaX;
+            css(self.elements.viewport, {
+                width: self.options.viewport.width + 'px'
+            });
+        }
+        function moveHandlerMirroredS(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+            if(!(newWidth >= minSize && newWidth <= maxWidth)){
+                return
+            }
+            css(wrap, {
+                height: newHeight + 'px'
+            });
+
+            self.options.boundary.height += deltaY;
+            css(self.elements.boundary, {
+                height: self.options.boundary.height + 'px'
+            });
+
+            self.options.viewport.height += deltaY;
+            css(self.elements.viewport, {
+                height: self.options.viewport.height + 'px'
+            });
+        }
+        function moveHandlerN(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+        }
+        function moveHandlerNE(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerE(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerSE(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerS(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerSW(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerW(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+        function moveHandlerNW(pageX, pageY, deltaX, deltaY, newHeight, newWidth){
+
+        }
+
 
         function mouseUp() {
             isDragging = false;
