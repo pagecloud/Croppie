@@ -661,6 +661,7 @@
             }
 
             var overlayRect = self.elements.overlay.getBoundingClientRect();
+            var boundaryRect = self.elements.boundary.getBoundingClientRect();
 
             isDragging = true;
             originalX = ev.pageX;
@@ -675,6 +676,9 @@
 
             maxWidth = overlayRect.width;
             maxHeight = overlayRect.height;
+            minLeft = overlayRect.left - boundaryRect.left;
+            minTop = overlayRect.top - boundaryRect.top;
+            console.log("MaxWidth: %s MaxHeight: %s \n minLeft: %s \n minTop: %s", maxWidth, maxHeight, minLeft, minTop)
 
             if (ev.touches) {
                 var touches = ev.touches[0];
@@ -709,7 +713,9 @@
             MOVE_HANDLERS[direction].call(self, deltaX, deltaY);
 
             _updateOverlay.call(self);
-            _updateZoomLimits.call(self);
+            if (!self.options.resizeControls.NSEW) {
+                _updateZoomLimits.call(self);
+            }
             _updateCenterPoint.call(self);
             _triggerUpdate.call(self);
             originalY = pageY;
@@ -770,10 +776,23 @@
             css(wrap, viewportDims);
             css(self.elements.viewport, viewportDims);
             css(self.elements.boundary, getDims(self.options.boundary));
+        }
 
+        function isViewportShiftValid(shift) {
+            var newBounds = ["height", "width", "top", "left"].reduce(function(dims, prop) {
+                dims[prop] = shift[prop] ? self.options.viewport[prop] + shift[prop] : self.options.viewport[prop];
+                return dims;
+            }, {});
+            return newBounds.left >= minLeft && newBounds.top >= minTop
+                && (newBounds.top + newBounds.height < minTop + maxHeight)
+                && (newBounds.left + newBounds.width < minLeft + maxWidth)
+                && newBounds.width > minSize && newBounds.height > minSize;
         }
 
         function moveHandlerN(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ top: deltaY, height: -deltaY })) {
+                return;
+            }
             self.options.viewport.top += deltaY;
             self.options.viewport.height -= deltaY;
             self.options.boundary.top += deltaY;
@@ -783,6 +802,9 @@
         }
 
         function moveHandlerE(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ width: deltaX })) {
+                return;
+            }
             self.options.viewport.width += deltaX;
             self.options.boundary.width += deltaX;
 
@@ -790,12 +812,18 @@
         }
 
         function moveHandlerS(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ height: deltaY })) {
+                return;
+            }
             self.options.viewport.height += deltaY;
             self.options.boundary.height += deltaY;
             setBoxSizes.call(self);
         }
 
         function moveHandlerW(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ width: -deltaX, left: deltaX })) {
+                return;
+            }
             self.options.viewport.left += deltaX;
             self.options.viewport.width -= deltaX;
             self.options.boundary.left += deltaX;
@@ -804,7 +832,7 @@
             setBoxSizes.call(self);
         }
 
-        function proportionalHandler(hCallback, vCallback, deltaX, deltaY, newHeight, newWidth, inverse = 1){
+        function proportionalHandler(hCallback, vCallback, deltaX, deltaY, newHeight, newWidth, inverse = 1) {
             var nextRatio = newHeight / newWidth;
             //positive means too tall negative means too wide
             var nextRatioSign = nextRatio - originalRatio;
@@ -823,26 +851,36 @@
         }
 
         function moveHandlerNE(deltaX, deltaY) {
-            console.log("ne")
+            if (!isViewportShiftValid({ top: deltaY, height: -deltaY, width: deltaX  })) {
+                return;
+            }
             var newHeight = self.options.viewport.height - deltaY;
             var newWidth = self.options.viewport.width + deltaX;
             proportionalHandler(moveHandlerE, moveHandlerN, deltaX, deltaY, newHeight, newWidth, -1);
         }
 
         function moveHandlerSE(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ height: deltaY,  width: deltaX})) {
+                return;
+            }
             var newHeight = self.options.viewport.height + deltaY;
             var newWidth = self.options.viewport.width + deltaX;
             proportionalHandler(moveHandlerE, moveHandlerS, deltaX, deltaY, newHeight, newWidth);
-
         }
 
         function moveHandlerNW(deltaX, deltaY, newHeight, newWidth) {
+            if (!isViewportShiftValid({ top: deltaY, height: -deltaY, width: -deltaX, left: deltaX })) {
+                return;
+            }
             var newHeight = self.options.viewport.height - deltaY;
             var newWidth = self.options.viewport.width - deltaX;
             proportionalHandler(moveHandlerW, moveHandlerN, deltaX, deltaY, newHeight, newWidth);
         }
 
         function moveHandlerSW(deltaX, deltaY) {
+            if (!isViewportShiftValid({ height: deltaY, width: -deltaX, left: deltaX })) {
+                return;
+            }
             var newHeight = self.options.viewport.height + deltaY;
             var newWidth = self.options.viewport.width - deltaX;
             proportionalHandler(moveHandlerW, moveHandlerS, deltaX, deltaY, newHeight, newWidth, -1);
