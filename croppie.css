@@ -116,6 +116,13 @@
     left: auto;
 }
 
+.croppie-container .cr-resizer-handle-n, .croppie-container .cr-resizer-handle-s  {
+    transform: translateX(-50%)
+}
+.croppie-container .cr-resizer-handle-e, .croppie-container .cr-resizer-handle-w {
+    transform: translateY(-50%)
+}
+
 
 .croppie-container .cr-original-image {
     display: none;
@@ -292,4 +299,13 @@ background: #ccc;
 
 .cr-rotate-r i:before {
     content: '↻';
+}
+
+
+/***********************************/
+/* Cardinal direction resizer styles */
+/***********************************/
+
+.cr-resizer.cr-nsew, .cr-viewport.cr-nsew {
+    margin : 0px;
 }
