@@ -678,7 +678,6 @@
             maxHeight = overlayRect.height;
             minLeft = overlayRect.left - boundaryRect.left;
             minTop = overlayRect.top - boundaryRect.top;
-            console.log("MaxWidth: %s MaxHeight: %s \n minLeft: %s \n minTop: %s", maxWidth, maxHeight, minLeft, minTop)
 
             if (ev.touches) {
                 var touches = ev.touches[0];
@@ -707,8 +706,6 @@
 
             var deltaX = pageX - originalX;
             var deltaY = pageY - originalY;
-            //var newHeight = self.options.viewport.height + deltaY;
-            //var newWidth = self.options.viewport.width + deltaX;
 
             MOVE_HANDLERS[direction].call(self, deltaX, deltaY);
 
@@ -784,9 +781,9 @@
                 return dims;
             }, {});
             return newBounds.left >= minLeft && newBounds.top >= minTop
-                && (newBounds.top + newBounds.height < minTop + maxHeight)
-                && (newBounds.left + newBounds.width < minLeft + maxWidth)
-                && newBounds.width > minSize && newBounds.height > minSize;
+                && (newBounds.top + newBounds.height <= minTop + maxHeight)
+                && (newBounds.left + newBounds.width <= minLeft + maxWidth)
+                && newBounds.width >= minSize && newBounds.height >= minSize;
         }
 
         function moveHandlerN(deltaX, deltaY, newHeight, newWidth) {
@@ -1396,6 +1393,22 @@
         _updateOverlay.call(self);
     }
 
+
+    /**
+     * Get the elements client rect without border width because that causes zoom to be wrong
+     * @param element to get the client rect for
+     */
+    function getInnerDimensions(element){
+        var boundingClientRect = element.getBoundingClientRect()
+        //How much do I miss babel? Let me list the ways.
+        var copy = ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
+            return copy[key] = boundingClientRect[key] && copy;
+        },{})
+        var computedStyles = window.getComputedStyle(element);
+        copy.width = parseInt(computedStyles.width);
+        copy.height = parseInt(computedStyles.height);
+        return copy;
+    }
     function _updateZoomLimits(initial) {
         var self = this,
             minZoom = 0,
@@ -1406,7 +1419,7 @@
             scale = parseFloat(zoomer.value),
             boundaryData = self.elements.boundary.getBoundingClientRect(),
             imgData = naturalImageDimensions(self.elements.img, self.data.orientation),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             minW,
             minH;
         if (self.options.enforceBoundary) {
@@ -1465,7 +1478,7 @@
     function _centerImage() {
         var self = this,
             imgDim = self.elements.preview.getBoundingClientRect(),
-            vpDim = self.elements.viewport.getBoundingClientRect(),
+            vpDim = getInnerDimensions(self.elements.viewport),
             boundDim = self.elements.boundary.getBoundingClientRect(),
             vpLeft = vpDim.left - boundDim.left,
             vpTop = vpDim.top - boundDim.top,
