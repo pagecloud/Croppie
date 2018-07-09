@@ -674,10 +674,10 @@
                 direction = ev.currentTarget.className.indexOf("vertical") !== -1 ? "v" : "h";
             }
 
-            maxWidth = overlayRect.width;
-            maxHeight = overlayRect.height;
-            minLeft = overlayRect.left - boundaryRect.left;
-            minTop = overlayRect.top - boundaryRect.top;
+            maxWidth = Math.ceil(overlayRect.width);
+            maxHeight = Math.ceil(overlayRect.height);
+            minLeft = Math.floor(overlayRect.left - boundaryRect.left);
+            minTop = Math.floor(overlayRect.top - boundaryRect.top);
 
             if (ev.touches) {
                 var touches = ev.touches[0];
@@ -763,7 +763,7 @@
 
         function getDims(object) {
             return ["height", "width", "top", "left"].reduce(function(dims, prop) {
-                dims[prop] = object[prop] + "px";
+                dims[prop] = Math.round(object[prop]) + "px";
                 return dims;
             }, {});
         }
@@ -955,7 +955,7 @@
             _onZoom.call(self, {
                 value: parseFloat(zoomer.value),
                 origin: new TransformOrigin(self.elements.preview),
-                viewportRect: self.elements.viewport.getBoundingClientRect(),
+                viewportRect: getInnerDimensions(self.elements.viewport),
                 transform: Transform.parse(self.elements.preview)
             });
         }
@@ -990,11 +990,10 @@
             self.elements.boundary.addEventListener("DOMMouseScroll", scroll);
         }
     }
-
     function _onZoom(ui) {
         var self = this,
             transform = ui ? ui.transform : Transform.parse(self.elements.preview),
-            vpRect = ui ? ui.viewportRect : self.elements.viewport.getBoundingClientRect(),
+            vpRect = ui ? ui.viewportRect : getInnerDimensions(self.elements.viewport),
             origin = ui ? ui.origin : new TransformOrigin(self.elements.preview);
 
         function applyCss() {
@@ -1084,7 +1083,7 @@
         var self = this,
             scale = self._currentZoom,
             data = self.elements.preview.getBoundingClientRect(),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             transform = Transform.parse(self.elements.preview.style[CSS_TRANSFORM]),
             pc = new TransformOrigin(self.elements.preview),
             top = (vpData.top - data.top) + (vpData.height / 2),
@@ -1176,7 +1175,7 @@
 
                 transform = Transform.parse(self.elements.preview);
                 document.body.style[CSS_USERSELECT] = "none";
-                vpRect = self.elements.viewport.getBoundingClientRect();
+                vpRect = getInnerDimensions(self.elements.viewport);
                 keyMove(movement);
             }
 
@@ -1235,7 +1234,7 @@
             window.addEventListener("mouseup", mouseUp);
             window.addEventListener("touchend", mouseUp);
             document.body.style[CSS_USERSELECT] = "none";
-            vpRect = self.elements.viewport.getBoundingClientRect();
+            vpRect = getInnerDimensions(self.elements.viewport);
         }
 
         function mouseMove(ev) {
@@ -1402,7 +1401,7 @@
         var boundingClientRect = element.getBoundingClientRect()
         //How much do I miss babel? Let me list the ways.
         var copy = ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
-            return copy[key] = boundingClientRect[key] && copy;
+            return (copy[key] = boundingClientRect[key]) && copy;
         },{})
         var computedStyles = window.getComputedStyle(element);
         copy.width = parseInt(computedStyles.width);
@@ -1454,7 +1453,7 @@
         var self = this,
             pointsWidth = points[2] - points[0],
             // pointsHeight = points[3] - points[1],
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             boundRect = self.elements.boundary.getBoundingClientRect(),
             vpOffset = {
                 left: vpData.left - boundRect.left,
@@ -1625,7 +1624,7 @@
             _replaceImage.call(self, img);
             if (!points.length) {
                 var natDim = naturalImageDimensions(img);
-                var rect = self.elements.viewport.getBoundingClientRect();
+                var rect = getInnerDimensions(self.elements.viewport);
                 var aspectRatio = rect.width / rect.height;
                 var imgAspectRatio = natDim.width / natDim.height;
                 var width, height;
@@ -1673,7 +1672,7 @@
     function _get() {
         var self = this,
             imgData = self.elements.preview.getBoundingClientRect(),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             x1 = vpData.left - imgData.left,
             y1 = vpData.top - imgData.top,
             widthDiff = (vpData.width - self.elements.viewport.offsetWidth) / 2, //border
@@ -1716,7 +1715,7 @@
             quality = opts.quality,
             backgroundColor = opts.backgroundColor,
             circle = typeof opts.circle === "boolean" ? opts.circle : (self.options.viewport.type === "circle"),
-            vpRect = self.elements.viewport.getBoundingClientRect(),
+            vpRect = getInnerDimensions(self.elements.viewport),
             ratio = vpRect.width / vpRect.height,
             prom;
 
