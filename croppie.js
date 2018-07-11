@@ -716,7 +716,7 @@
                 _updateZoomLimits.call(self);
             }
             _updateCenterPoint.call(self);
-            _triggerUpdate.call(self);
+            _triggerUpdate.call(self, ev);
             originalY = pageY;
             originalX = pageX;
         }
@@ -1317,9 +1317,10 @@
 
     var _debouncedOverlay = debounce(_updateOverlay, 500);
 
-    function _triggerUpdate() {
+    function _triggerUpdate(originalEvent) {
         var self = this,
             data = self.get();
+            data.originalEvent = originalEvent;
 
         if (!_isVisible.call(self)) {
             return;
