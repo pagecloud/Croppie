@@ -317,7 +317,7 @@
     }
 
     /* Utilities */
-    function loadImage(src, doExif) {
+    function loadImage(src, doExif, crossOrigin) {
         var img = new Image();
         img.style.opacity = "0";
         return new Promise(function(resolve, reject) {
@@ -328,9 +328,11 @@
                 }, 1);
             }
 
-            img.removeAttribute("crossOrigin");
-            if (src.match(/^https?:\/\/|^\/\//)) {
-                img.setAttribute("crossOrigin", "anonymous");
+            if(crossOrigin) {
+                img.removeAttribute("crossOrigin");
+                if (src.match(/^https?:\/\/|^\/\//)) {
+                    img.setAttribute("crossOrigin", "anonymous");
+                }
             }
 
             img.onload = function() {
@@ -674,8 +676,8 @@
                 direction = ev.currentTarget.className.indexOf("vertical") !== -1 ? "v" : "h";
             }
 
-            maxWidth = Math.ceil(overlayRect.width);
-            maxHeight = Math.ceil(overlayRect.height);
+            maxWidth = overlayRect.width;
+            maxHeight = overlayRect.height;
             minLeft = Math.floor(overlayRect.left - boundaryRect.left);
             minTop = Math.floor(overlayRect.top - boundaryRect.top);
 
@@ -1620,7 +1622,7 @@
         self.data.url = url || self.data.url;
         self.data.boundZoom = zoom;
 
-        return loadImage(url, hasExif).then(function(img) {
+        return loadImage(url, hasExif, self.options.anonymousCrossOrigin).then(function(img) {
             _replaceImage.call(self, img);
             if (!points.length) {
                 var natDim = naturalImageDimensions(img);
@@ -1841,6 +1843,7 @@
             height: true,
             NSEW: false
         },
+        anonymousCrossOrigin : true,
         customClass: "",
         showZoomer: true,
         enableZoom: true,
