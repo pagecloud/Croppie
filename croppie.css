@@ -117,11 +117,23 @@
 }
 
 .croppie-container .cr-resizer-handle-n, .croppie-container .cr-resizer-handle-s  {
-    transform: translateX(-50%)
+    transform: translateX(-50%);
+    cursor: ns-resize;
 }
 .croppie-container .cr-resizer-handle-e, .croppie-container .cr-resizer-handle-w {
-    transform: translateY(-50%)
+    transform: translateY(-50%);
+    cursor: ew-resize;
 }
+
+.croppie-container .cr-resizer-handle-ne, .croppie-container .cr-resizer-handle-sw{
+    cursor: nesw-resize;
+}
+
+.croppie-container .cr-resizer-handle-nw, .croppie-container .cr-resizer-handle-se{
+    cursor: nwse-resize;
+}
+
+
 
 
 .croppie-container .cr-original-image {
