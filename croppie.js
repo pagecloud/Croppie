@@ -678,8 +678,8 @@
 
             maxWidth = overlayRect.width;
             maxHeight = overlayRect.height;
-            minLeft = Math.floor(overlayRect.left - boundaryRect.left);
-            minTop = Math.floor(overlayRect.top - boundaryRect.top);
+            minLeft = overlayRect.left - boundaryRect.left;
+            minTop = overlayRect.top - boundaryRect.top;
 
             if (ev.touches) {
                 var touches = ev.touches[0];
@@ -782,9 +782,9 @@
                 dims[prop] = shift[prop] ? self.options.viewport[prop] + shift[prop] : self.options.viewport[prop];
                 return dims;
             }, {});
-            return newBounds.left >= minLeft && newBounds.top >= minTop
-                && (newBounds.top + newBounds.height <= minTop + maxHeight)
-                && (newBounds.left + newBounds.width <= minLeft + maxWidth)
+            return newBounds.left >= minLeft && newBounds.top >= Math.floor(minTop)
+                && (newBounds.top + newBounds.height <= Math.ceil(minTop) + Math.ceil(maxHeight))
+                && (newBounds.left + newBounds.width <= Math.ceil(minLeft) + Math.ceil(maxWidth))
                 && newBounds.width >= minSize && newBounds.height >= minSize;
         }
 
