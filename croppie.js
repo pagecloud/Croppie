@@ -687,7 +687,7 @@
             originalBounds = Object.assign({}, self.options.viewport);
             var left = Math.round(viewportRect.left - imageRect.left);
             var top = Math.round(viewportRect.top - imageRect.top);
-            
+
             if (ev.touches) {
                 var touches = ev.touches[0];
                 originalX = touches.pageX;
@@ -887,48 +887,31 @@
             return { x: Math.round(deltaX), y: Math.round(deltaY) };
         }
 
-        function moveHandlerNE(deltaX, deltaY) {
-            const delta = getProportionalDelta(deltaX, deltaY, -1);
+        function cornerMoveHandler(deltaX, deltaY, inverse, handler1, handler2){
+            const delta = getProportionalDelta(deltaX, deltaY, inverse);
             const nextBounds = Object.assign({},
-                boundsN(delta.x, delta.y, originalBounds),
-                boundsE(delta.x, delta.y, originalBounds));
+                handler1(delta.x, delta.y, originalBounds),
+                handler2(delta.x, delta.y, originalBounds));
             if(!isViewportValid(nextBounds)){
                 return;
             }
             applyBounds(nextBounds);
+        }
+
+        function moveHandlerNE(deltaX, deltaY) {
+            cornerMoveHandler(deltaX, deltaY, -1, boundsN, boundsE);
         }
 
         function moveHandlerSE(deltaX, deltaY, newHeight, newWidth) {
-            const delta = getProportionalDelta(deltaX, deltaY, 1);
-            const nextBounds = Object.assign({},
-                boundsS(delta.x, delta.y, originalBounds),
-                boundsE(delta.x, delta.y, originalBounds));
-            if(!isViewportValid(nextBounds)){
-                return;
-            }
-            applyBounds(nextBounds);
+            cornerMoveHandler(deltaX, deltaY, 1, boundsS, boundsE);
         }
 
         function moveHandlerNW(deltaX, deltaY, originalBounds) {
-            const delta = getProportionalDelta(deltaX, deltaY, 1);
-            const nextBounds = Object.assign({},
-                boundsN(delta.x, delta.y, originalBounds),
-                boundsW(delta.x, delta.y, originalBounds));
-            if(!isViewportValid(nextBounds)){
-                return;
-            }
-            applyBounds(nextBounds);
+            cornerMoveHandler(deltaX, deltaY, 1, boundsN, boundsW);
         }
 
         function moveHandlerSW(deltaX, deltaY) {
-            const delta = getProportionalDelta(deltaX, deltaY, -1);
-            const nextBounds = Object.assign({},
-                boundsS(delta.x, delta.y, originalBounds),
-                boundsW(delta.x, delta.y, originalBounds));
-            if (!isViewportValid(nextBounds)) {
-                return;
-            }
-            applyBounds(nextBounds);
+            cornerMoveHandler(deltaX, deltaY, -1, boundsS, boundsW);
         }
 
         var MOVE_HANDLERS = {
