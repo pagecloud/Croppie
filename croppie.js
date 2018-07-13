@@ -4,7 +4,7 @@
  * Foliotek
  * Version: 2.6.2
  *************************/
-(function(root, factory) {
+(function (root, factory) {
     if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
         define(factory);
@@ -15,14 +15,14 @@
         // Browser globals
         root.Croppie = factory();
     }
-}(typeof self !== "undefined" ? self : this, function() {
+}(typeof self !== "undefined" ? self : this, function () {
 
     /* Polyfills */
     if (typeof Promise !== "function") {
         /*! promise-polyfill 3.1.0 */
-        !function(a) {
+        !function (a) {
             function b(a, b) {
-                return function() {
+                return function () {
                     a.apply(b, arguments);
                 };
             }
@@ -39,7 +39,7 @@
 
             function d(a) {
                 var b = this;
-                return null === this._state ? void this._deferreds.push(a) : void k(function() {
+                return null === this._state ? void this._deferreds.push(a) : void k(function () {
                     var c = b._state ? a.onFulfilled : a.onRejected;
                     if (null === c) {
                         return void(b._state ? a.resolve : a.reject)(b._value);
@@ -89,9 +89,9 @@
             function i(a, b, c) {
                 var d = !1;
                 try {
-                    a(function(a) {
+                    a(function (a) {
                         d || (d = !0, b(a));
-                    }, function(a) {
+                    }, function (a) {
                         d || (d = !0, c(a));
                     });
                 } catch (e) {
@@ -102,27 +102,27 @@
                 }
             }
 
-            var j = setTimeout, k = "function" === typeof setImmediate && setImmediate || function(a) {
+            var j = setTimeout, k = "function" === typeof setImmediate && setImmediate || function (a) {
                 j(a, 1);
-            }, l = Array.isArray || function(a) {
+            }, l = Array.isArray || function (a) {
                 return "[object Array]" === Object.prototype.toString.call(a);
             };
-            c.prototype["catch"] = function(a) {
+            c.prototype["catch"] = function (a) {
                 return this.then(null, a);
-            }, c.prototype.then = function(a, b) {
+            }, c.prototype.then = function (a, b) {
                 var e = this;
-                return new c(function(c, f) {
+                return new c(function (c, f) {
                     d.call(e, new h(a, b, c, f));
                 });
-            }, c.all = function() {
+            }, c.all = function () {
                 var a = Array.prototype.slice.call(1 === arguments.length && l(arguments[0]) ? arguments[0] : arguments);
-                return new c(function(b, c) {
+                return new c(function (b, c) {
                     function d(f, g) {
                         try {
                             if (g && ("object" === typeof g || "function" === typeof g)) {
                                 var h = g.then;
                                 if ("function" === typeof h) {
-                                    return void h.call(g, function(a) {
+                                    return void h.call(g, function (a) {
                                         d(f, a);
                                     }, c);
                                 }
@@ -140,28 +140,28 @@
                         d(f, a[f]);
                     }
                 });
-            }, c.resolve = function(a) {
-                return a && "object" === typeof a && a.constructor === c ? a : new c(function(b) {
+            }, c.resolve = function (a) {
+                return a && "object" === typeof a && a.constructor === c ? a : new c(function (b) {
                     b(a);
                 });
-            }, c.reject = function(a) {
-                return new c(function(b, c) {
+            }, c.reject = function (a) {
+                return new c(function (b, c) {
                     c(a);
                 });
-            }, c.race = function(a) {
-                return new c(function(b, c) {
+            }, c.race = function (a) {
+                return new c(function (b, c) {
                     for (var d = 0, e = a.length; e > d; d++) {
                         a[d].then(b, c);
                     }
                 });
-            }, c._setImmediateFn = function(a) {
+            }, c._setImmediateFn = function (a) {
                 k = a;
             }, "undefined" !== typeof module && module.exports ? module.exports = c : a.Promise || (a.Promise = c);
         }(this);
     }
 
     if (typeof window.CustomEvent !== "function") {
-        (function() {
+        (function () {
             function CustomEvent(event, params) {
                 params = params || { bubbles: false, cancelable: false, detail: undefined };
                 var evt = document.createEvent("CustomEvent");
@@ -176,7 +176,7 @@
 
     if (!HTMLCanvasElement.prototype.toBlob) {
         Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
-            value: function(callback, type, quality) {
+            value: function (callback, type, quality) {
                 var binStr = atob(this.toDataURL(type, quality).split(",")[1]),
                     len = binStr.length,
                     arr = new Uint8Array(len);
@@ -247,9 +247,9 @@
 
     function debounce(func, wait, immediate) {
         var timeout;
-        return function() {
+        return function () {
             var context = this, args = arguments;
-            var later = function() {
+            var later = function () {
                 timeout = null;
                 if (!immediate) {
                     func.apply(context, args);
@@ -320,24 +320,24 @@
     function loadImage(src, doExif, crossOrigin) {
         var img = new Image();
         img.style.opacity = "0";
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             function _resolve() {
                 img.style.opacity = "1";
-                setTimeout(function() {
+                setTimeout(function () {
                     resolve(img);
                 }, 1);
             }
 
-            if(crossOrigin) {
+            if (crossOrigin) {
                 img.removeAttribute("crossOrigin");
                 if (src.match(/^https?:\/\/|^\/\//)) {
                     img.setAttribute("crossOrigin", "anonymous");
                 }
             }
 
-            img.onload = function() {
+            img.onload = function () {
                 if (doExif) {
-                    EXIF.getData(img, function() {
+                    EXIF.getData(img, function () {
                         _resolve();
                     });
                 }
@@ -345,9 +345,9 @@
                     _resolve();
                 }
             };
-            img.onerror = function(ev) {
+            img.onerror = function (ev) {
                 img.style.opacity = 1;
-                setTimeout(function() {
+                setTimeout(function () {
                     reject(ev);
                 }, 1);
             };
@@ -376,13 +376,13 @@
             suffix: ""
         }
     };
-    var Transform = function(x, y, scale) {
+    var Transform = function (x, y, scale) {
         this.x = parseFloat(x);
         this.y = parseFloat(y);
         this.scale = parseFloat(scale);
     };
 
-    Transform.parse = function(v) {
+    Transform.parse = function (v) {
         if (v.style) {
             return Transform.parse(v.style[CSS_TRANSFORM]);
         }
@@ -394,7 +394,7 @@
         }
     };
 
-    Transform.fromMatrix = function(v) {
+    Transform.fromMatrix = function (v) {
         var vals = v.substring(7).split(",");
         if (!vals.length || v === "none") {
             vals = [1, 0, 0, 1, 0, 0];
@@ -403,7 +403,7 @@
         return new Transform(num(vals[4]), num(vals[5]), parseFloat(vals[0]));
     };
 
-    Transform.fromString = function(v) {
+    Transform.fromString = function (v) {
         var values = v.split(") "),
             translate = values[0].substring(Croppie.globals.translate.length + 1).split(","),
             scale = values.length > 1 ? values[1].substring(6) : 1,
@@ -413,12 +413,12 @@
         return new Transform(x, y, scale);
     };
 
-    Transform.prototype.toString = function() {
+    Transform.prototype.toString = function () {
         var suffix = TRANSLATE_OPTS[Croppie.globals.translate].suffix || "";
         return Croppie.globals.translate + "(" + this.x + "px, " + this.y + "px" + suffix + ") scale(" + this.scale + ")";
     };
 
-    var TransformOrigin = function(el) {
+    var TransformOrigin = function (el) {
         if (!el || !el.style[CSS_TRANS_ORG]) {
             this.x = 0;
             this.y = 0;
@@ -429,7 +429,7 @@
         this.y = parseFloat(css[1]);
     };
 
-    TransformOrigin.prototype.toString = function() {
+    TransformOrigin.prototype.toString = function () {
         return this.x + "px " + this.y + "px";
     };
 
@@ -618,6 +618,7 @@
         var vr;
         var hr;
         var handles;
+        var originalBounds;
 
         addClass(wrap, "cr-resizer");
         css(wrap, {
@@ -627,7 +628,7 @@
 
 
         if (this.options.resizeControls.NSEW) {
-            var addHandle = function(direction) {
+            var addHandle = function (direction) {
                 var handle = document.createElement("div");
                 addClass(handle, "cr-resizer-handle-" + direction);
                 wrap.appendChild(handle);
@@ -664,6 +665,8 @@
 
             var overlayRect = self.elements.overlay.getBoundingClientRect();
             var boundaryRect = self.elements.boundary.getBoundingClientRect();
+            var imageRect = self.elements.img.getBoundingClientRect();
+            var viewportRect = self.elements.viewport.getBoundingClientRect();
 
             isDragging = true;
             originalX = ev.pageX;
@@ -681,6 +684,10 @@
             minLeft = overlayRect.left - boundaryRect.left;
             minTop = overlayRect.top - boundaryRect.top;
 
+            originalBounds = Object.assign({}, self.options.viewport);
+            var left = Math.round(viewportRect.left - imageRect.left);
+            var top = Math.round(viewportRect.top - imageRect.top);
+            
             if (ev.touches) {
                 var touches = ev.touches[0];
                 originalX = touches.pageX;
@@ -694,22 +701,50 @@
             document.body.style[CSS_USERSELECT] = "none";
         }
 
-        function mouseMove(ev) {
-            var pageX = ev.pageX;
-            var pageY = ev.pageY;
+        function mirroredDragDriver(handler) {
+            return function (ev) {
+                var pageX = ev.pageX;
+                var pageY = ev.pageY;
 
+                if (ev.touches) {
+                    var touches = ev.touches[0];
+                    pageX = touches.pageX;
+                    pageY = touches.pageY;
+                }
+
+                var deltaX = pageX - originalX;
+                var deltaY = pageY - originalY;
+
+                handler.call(this, deltaX, deltaY)
+
+                originalY = pageY;
+                originalX = pageX;
+            }
+        }
+
+        function nsewDragDriver(handler) {
+            return function (ev) {
+                var pageX = ev.pageX;
+                var pageY = ev.pageY;
+
+                if (ev.touches) {
+                    var touches = ev.touches[0];
+                    pageX = touches.pageX;
+                    pageY = touches.pageY;
+                }
+
+                var deltaX = pageX - originalX;
+                var deltaY = pageY - originalY;
+
+                handler.call(this, deltaX, deltaY, originalBounds)
+            }
+        }
+
+
+        function mouseMove(ev) {
             ev.preventDefault();
 
-            if (ev.touches) {
-                var touches = ev.touches[0];
-                pageX = touches.pageX;
-                pageY = touches.pageY;
-            }
-
-            var deltaX = pageX - originalX;
-            var deltaY = pageY - originalY;
-
-            MOVE_HANDLERS[direction].call(self, deltaX, deltaY);
+            MOVE_HANDLERS[direction].call(self, ev);
 
             _updateOverlay.call(self);
             if (!self.options.resizeControls.NSEW) {
@@ -717,8 +752,7 @@
             }
             _updateCenterPoint.call(self);
             _triggerUpdate.call(self, ev);
-            originalY = pageY;
-            originalX = pageX;
+
         }
 
         function moveHandlerMirroredE(deltaX, deltaY) {
@@ -764,7 +798,7 @@
         }
 
         function getDims(object) {
-            return ["height", "width", "top", "left"].reduce(function(dims, prop) {
+            return ["height", "width", "top", "left"].reduce(function (dims, prop) {
                 dims[prop] = Math.round(object[prop]) + "px";
                 return dims;
             }, {});
@@ -777,9 +811,9 @@
             css(self.elements.boundary, getDims(self.options.boundary));
         }
 
-        function isViewportShiftValid(shift) {
-            var newBounds = ["height", "width", "top", "left"].reduce(function(dims, prop) {
-                dims[prop] = shift[prop] ? self.options.viewport[prop] + shift[prop] : self.options.viewport[prop];
+        function isViewportValid(bounds) {
+            var newBounds = ["height", "width", "top", "left"].reduce(function (dims, prop) {
+                dims[prop] = bounds[prop] || self.options.viewport[prop];
                 return dims;
             }, {});
             return newBounds.left >= minLeft && newBounds.top >= Math.floor(minTop)
@@ -788,114 +822,126 @@
                 && newBounds.width >= minSize && newBounds.height >= minSize;
         }
 
-        function moveHandlerN(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ top: deltaY, height: -deltaY })) {
-                return;
-            }
-            self.options.viewport.top += deltaY;
-            self.options.viewport.height -= deltaY;
-            self.options.boundary.top += deltaY;
-            self.options.boundary.height -= deltaY;
-
+        function applyBounds(nextBounds) {
+            Object.keys(nextBounds).forEach(function (key) {
+                self.options.boundary[key] += nextBounds[key] - self.options.viewport[key];
+                self.options.viewport[key] = nextBounds[key];
+            });
             setBoxSizes.call(self);
         }
 
-        function moveHandlerE(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ width: deltaX })) {
-                return;
-            }
-            self.options.viewport.width += deltaX;
-            self.options.boundary.width += deltaX;
-
-            setBoxSizes.call(self);
+        function boundsN(deltaX, deltaY, originalBounds) {
+            return { top: originalBounds.top + deltaY, height: originalBounds.height - deltaY };
         }
 
-        function moveHandlerS(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ height: deltaY })) {
+        function moveHandlerN(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsN(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
                 return;
             }
-            self.options.viewport.height += deltaY;
-            self.options.boundary.height += deltaY;
-            setBoxSizes.call(self);
+            applyBounds(nextBounds);
         }
 
-        function moveHandlerW(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ width: -deltaX, left: deltaX })) {
+        function boundsE(deltaX, deltaY, originalBounds) {
+            return { width: originalBounds.width + deltaX }
+        }
+
+        function moveHandlerE(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsE(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
                 return;
             }
-            self.options.viewport.left += deltaX;
-            self.options.viewport.width -= deltaX;
-            self.options.boundary.left += deltaX;
-            self.options.boundary.width -= deltaX;
-
-            setBoxSizes.call(self);
+            applyBounds(nextBounds);
         }
 
-        function proportionalHandler(hCallback, vCallback, deltaX, deltaY, newHeight, newWidth, inverse = 1) {
-            var nextRatio = newHeight / newWidth;
-            //positive means too tall negative means too wide
-            var nextRatioSign = nextRatio - originalRatio;
+        function boundsS(deltaX, deltaY, originalBounds) {
+            return { height: originalBounds.height + deltaY }
+        }
 
-            if (nextRatioSign > 0 && deltaY > 0 || nextRatioSign < 0 && deltaY < 0) {
-                //use the width as resize basis
-                deltaY = inverse * deltaX * originalRatio;
-                hCallback.call(self, deltaX, deltaY, newHeight, newWidth);
-                vCallback.call(self, deltaX, deltaY, newHeight, newWidth);
-            } else {
-                //use the height as the resize basis
+        function moveHandlerS(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsS(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function boundsW(deltaX, deltaY, originalBounds) {
+            return { width: originalBounds.width - deltaX, left: originalBounds.left + deltaX };
+        }
+
+        function moveHandlerW(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsW(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function getProportionalDelta(deltaX, deltaY, inverse) {
+            if (deltaY > deltaX * originalRatio) {
                 deltaX = inverse * deltaY / originalRatio;
-                hCallback.call(self, deltaX, deltaY, newHeight, newWidth);
-                vCallback.call(self, deltaX, deltaY, newHeight, newWidth);
+            } else {
+                deltaY = inverse * deltaX * originalRatio;
             }
+            return { x: Math.round(deltaX), y: Math.round(deltaY) };
         }
 
         function moveHandlerNE(deltaX, deltaY) {
-            if (!isViewportShiftValid({ top: deltaY, height: -deltaY, width: deltaX  })) {
+            const delta = getProportionalDelta(deltaX, deltaY, -1);
+            const nextBounds = Object.assign({},
+                boundsN(delta.x, delta.y, originalBounds),
+                boundsE(delta.x, delta.y, originalBounds));
+            if(!isViewportValid(nextBounds)){
                 return;
             }
-            var newHeight = self.options.viewport.height - deltaY;
-            var newWidth = self.options.viewport.width + deltaX;
-            proportionalHandler(moveHandlerE, moveHandlerN, deltaX, deltaY, newHeight, newWidth, -1);
+            applyBounds(nextBounds);
         }
 
         function moveHandlerSE(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ height: deltaY,  width: deltaX})) {
+            const delta = getProportionalDelta(deltaX, deltaY, 1);
+            const nextBounds = Object.assign({},
+                boundsS(delta.x, delta.y, originalBounds),
+                boundsE(delta.x, delta.y, originalBounds));
+            if(!isViewportValid(nextBounds)){
                 return;
             }
-            var newHeight = self.options.viewport.height + deltaY;
-            var newWidth = self.options.viewport.width + deltaX;
-            proportionalHandler(moveHandlerE, moveHandlerS, deltaX, deltaY, newHeight, newWidth);
+            applyBounds(nextBounds);
         }
 
-        function moveHandlerNW(deltaX, deltaY, newHeight, newWidth) {
-            if (!isViewportShiftValid({ top: deltaY, height: -deltaY, width: -deltaX, left: deltaX })) {
+        function moveHandlerNW(deltaX, deltaY, originalBounds) {
+            const delta = getProportionalDelta(deltaX, deltaY, 1);
+            const nextBounds = Object.assign({},
+                boundsN(delta.x, delta.y, originalBounds),
+                boundsW(delta.x, delta.y, originalBounds));
+            if(!isViewportValid(nextBounds)){
                 return;
             }
-            var newHeight = self.options.viewport.height - deltaY;
-            var newWidth = self.options.viewport.width - deltaX;
-            proportionalHandler(moveHandlerW, moveHandlerN, deltaX, deltaY, newHeight, newWidth);
+            applyBounds(nextBounds);
         }
 
         function moveHandlerSW(deltaX, deltaY) {
-            if (!isViewportShiftValid({ height: deltaY, width: -deltaX, left: deltaX })) {
+            const delta = getProportionalDelta(deltaX, deltaY, -1);
+            const nextBounds = Object.assign({},
+                boundsS(delta.x, delta.y, originalBounds),
+                boundsW(delta.x, delta.y, originalBounds));
+            if (!isViewportValid(nextBounds)) {
                 return;
             }
-            var newHeight = self.options.viewport.height + deltaY;
-            var newWidth = self.options.viewport.width - deltaX;
-            proportionalHandler(moveHandlerW, moveHandlerS, deltaX, deltaY, newHeight, newWidth, -1);
+            applyBounds(nextBounds);
         }
 
         var MOVE_HANDLERS = {
-            "h": moveHandlerMirroredE,
-            "v": moveHandlerMirroredS,
-            "n": moveHandlerN,
-            "ne": moveHandlerNE,
-            "e": moveHandlerE,
-            "se": moveHandlerSE,
-            "s": moveHandlerS,
-            "sw": moveHandlerSW,
-            "w": moveHandlerW,
-            "nw": moveHandlerNW
+            "h": mirroredDragDriver(moveHandlerMirroredE),
+            "v": mirroredDragDriver(moveHandlerMirroredS),
+            "n": nsewDragDriver(moveHandlerN),
+            "ne": nsewDragDriver(moveHandlerNE),
+            "e": nsewDragDriver(moveHandlerE),
+            "se": nsewDragDriver(moveHandlerSE),
+            "s": nsewDragDriver(moveHandlerS),
+            "sw": nsewDragDriver(moveHandlerSW),
+            "w": nsewDragDriver(moveHandlerW),
+            "nw": nsewDragDriver(moveHandlerNW)
         };
 
 
@@ -918,7 +964,7 @@
             hr.addEventListener("touchstart", mouseDown);
         }
 
-        handles && handles.forEach(function(handle) {
+        handles && handles.forEach(function (handle) {
             handle.addEventListener("mousedown", mouseDown);
             handle.addEventListener("touchstart", mouseDown);
         });
@@ -992,6 +1038,7 @@
             self.elements.boundary.addEventListener("DOMMouseScroll", scroll);
         }
     }
+
     function _onZoom(ui) {
         var self = this,
             transform = ui ? ui.transform : Transform.parse(self.elements.preview),
@@ -1320,7 +1367,7 @@
     function _triggerUpdate(originalEvent) {
         var self = this,
             data = self.get();
-            data.originalEvent = originalEvent;
+        data.originalEvent = originalEvent;
 
         if (!_isVisible.call(self)) {
             return;
@@ -1395,22 +1442,27 @@
         _updateOverlay.call(self);
     }
 
+    function getBounds(element) {
+        //How much do I miss babel? Let me list the ways.
+        var boundingClientRect = element.getBoundingClientRect()
+        return ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
+            return (copy[key] = boundingClientRect[key]) && copy;
+        }, {});
+
+    }
 
     /**
      * Get the elements client rect without border width because that causes zoom to be wrong
      * @param element to get the client rect for
      */
-    function getInnerDimensions(element){
-        var boundingClientRect = element.getBoundingClientRect()
-        //How much do I miss babel? Let me list the ways.
-        var copy = ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
-            return (copy[key] = boundingClientRect[key]) && copy;
-        },{})
+    function getInnerDimensions(element) {
+        var copy = getBounds(element);
         var computedStyles = window.getComputedStyle(element);
         copy.width = parseInt(computedStyles.width);
         copy.height = parseInt(computedStyles.height);
         return copy;
     }
+
     function _updateZoomLimits(initial) {
         var self = this,
             minZoom = 0,
@@ -1576,8 +1628,8 @@
 
     function _getBlobResult(data) {
         var self = this;
-        return new Promise(function(resolve) {
-            _getCanvas.call(self, data).toBlob(function(blob) {
+        return new Promise(function (resolve) {
+            _getCanvas.call(self, data).toBlob(function (blob) {
                 resolve(blob);
             }, data.format, data.quality);
         });
@@ -1585,7 +1637,7 @@
 
     function _replaceImage(img) {
         if (this.elements.img.parentNode) {
-            Array.prototype.forEach.call(this.elements.img.classList, function(c) {
+            Array.prototype.forEach.call(this.elements.img.classList, function (c) {
                 img.classList.add(c);
             });
             this.elements.img.parentNode.replaceChild(img, this.elements.img);
@@ -1623,7 +1675,7 @@
         self.data.url = url || self.data.url;
         self.data.boundZoom = zoom;
 
-        return loadImage(url, hasExif, self.options.anonymousCrossOrigin).then(function(img) {
+        return loadImage(url, hasExif, self.options.anonymousCrossOrigin).then(function (img) {
             _replaceImage.call(self, img);
             if (!points.length) {
                 var natDim = naturalImageDimensions(img);
@@ -1656,7 +1708,7 @@
                 ];
             }
 
-            self.data.points = points.map(function(p) {
+            self.data.points = points.map(function (p) {
                 return parseFloat(p);
             });
             if (self.options.useCanvas) {
@@ -1747,7 +1799,7 @@
         data.url = self.data.url;
         data.backgroundColor = backgroundColor;
 
-        prom = new Promise(function(resolve) {
+        prom = new Promise(function (resolve) {
             switch (resultType.toLowerCase()) {
                 case "rawcanvas":
                     resolve(_getCanvas.call(self, data));
@@ -1844,7 +1896,7 @@
             height: true,
             NSEW: false
         },
-        anonymousCrossOrigin : true,
+        anonymousCrossOrigin: true,
         customClass: "",
         showZoomer: true,
         enableZoom: true,
@@ -1854,7 +1906,7 @@
         enforceBoundary: true,
         enableOrientation: false,
         enableKeyMovement: true,
-        update: function() {
+        update: function () {
         }
     };
 
@@ -1863,10 +1915,10 @@
     };
 
     deepExtend(Croppie.prototype, {
-        bind: function(options, cb) {
+        bind: function (options, cb) {
             return _bind.call(this, options, cb);
         },
-        get: function() {
+        get: function () {
             var data = _get.call(this);
             var points = data.points;
             if (this.options.relative) {
@@ -1877,20 +1929,20 @@
             }
             return data;
         },
-        result: function(type) {
+        result: function (type) {
             return _result.call(this, type);
         },
-        refresh: function() {
+        refresh: function () {
             return _refresh.call(this);
         },
-        setZoom: function(v) {
+        setZoom: function (v) {
             _setZoomerVal.call(this, v);
             dispatchChange(this.elements.zoomer);
         },
-        rotate: function(deg) {
+        rotate: function (deg) {
             _rotate.call(this, deg);
         },
-        destroy: function() {
+        destroy: function () {
             return _destroy.call(this);
         }
     });
