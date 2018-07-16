@@ -1485,6 +1485,9 @@
     }
 
     function _bindPoints(points) {
+        if(typeof points === "function"){
+            points = points()
+        }
         if (points.length !== 4) {
             throw "Croppie - Invalid number of points supplied: " + points;
         }
@@ -1689,6 +1692,9 @@
                     points[2] * img.naturalWidth / 100,
                     points[3] * img.naturalHeight / 100
                 ];
+            } else if (typeof options.points  === "function"){
+                options.points = options.points(img.naturalWidth, img.naturalHeight);
+                points = options.points;
             }
 
             self.data.points = points.map(function (p) {
