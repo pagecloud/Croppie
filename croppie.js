@@ -175,7 +175,7 @@
     }
 
     /* Utilities */
-    function loadImage(src, doExif) {
+    function loadImage(src, doExif, crossOrigin) {
         var img = new Image();
         img.style.opacity = '0';
         return new Promise(function (resolve, reject) {
@@ -186,9 +186,11 @@
                 }, 1);
             }
 
-            img.removeAttribute('crossOrigin');
-            if (src.match(/^https?:\/\/|^\/\//)) {
-                img.setAttribute('crossOrigin', 'anonymous');
+            if (crossOrigin) {
+                img.removeAttribute("crossOrigin");
+                if (src.match(/^https?:\/\/|^\/\//)) {
+                    img.setAttribute("crossOrigin", "anonymous");
+                }
             }
 
             img.onload = function () {
@@ -458,39 +460,61 @@
         return this.options.enableExif && window.EXIF;
     }
 
-    function _initializeResize () {
+    var DIRECTIONS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"];
+
+    function _initializeResize() {
         var self = this;
-        var wrap = document.createElement('div');
+        var wrap = document.createElement("div");
         var isDragging = false;
         var direction;
         var originalX;
         var originalY;
+        var originalRatio;
         var minSize = 50;
         var maxWidth;
         var maxHeight;
         var vr;
         var hr;
+        var handles;
+        var originalBounds;
 
-        addClass(wrap, 'cr-resizer');
+        addClass(wrap, "cr-resizer");
         css(wrap, {
-            width: this.options.viewport.width + 'px',
-            height: this.options.viewport.height + 'px'
+            width: this.options.viewport.width + "px",
+            height: this.options.viewport.height + "px"
         });
 
-        if (this.options.resizeControls.height) {
-            vr = document.createElement('div');
-            addClass(vr, 'cr-resizer-vertical');
-            wrap.appendChild(vr);
-        }
 
-        if (this.options.resizeControls.width) {
-            hr = document.createElement('div');
-            addClass(hr, 'cr-resizer-horisontal');
-            wrap.appendChild(hr);
+        if (this.options.resizeControls.NSEW) {
+            var addHandle = function (direction) {
+                var handle = document.createElement("div");
+                addClass(handle, "cr-resizer-handle-" + direction);
+                wrap.appendChild(handle);
+                return handle;
+            };
+            handles = DIRECTIONS.map(addHandle);
+            addClass(wrap, "cr-nsew");
+            addClass(self.elements.viewport, "cr-nsew");
+
+
+        } else {
+            if (this.options.resizeControls.height) {
+                vr = document.createElement("div");
+                addClass(vr, "cr-resizer-vertical");
+                wrap.appendChild(vr);
+            }
+
+            if (this.options.resizeControls.width) {
+                hr = document.createElement("div");
+                addClass(hr, "cr-resizer-horisontal");
+                wrap.appendChild(hr);
+            }
         }
 
         function mouseDown(ev) {
-            if (ev.button !== undefined && ev.button !== 0) return;
+            if (ev.button !== undefined && ev.button !== 0) {
+                return;
+            }
 
             ev.preventDefault();
             if (isDragging) {
@@ -498,13 +522,29 @@
             }
 
             var overlayRect = self.elements.overlay.getBoundingClientRect();
+            var boundaryRect = self.elements.boundary.getBoundingClientRect();
+            var imageRect = self.elements.img.getBoundingClientRect();
+            var viewportRect = self.elements.viewport.getBoundingClientRect();
 
             isDragging = true;
             originalX = ev.pageX;
             originalY = ev.pageY;
-            direction = ev.currentTarget.className.indexOf('vertical') !== -1 ? 'v' : 'h';
+            if (self.options.resizeControls.NSEW) {
+                var matches = ev.currentTarget.className.match(/cr-resizer-handle-(\w+)/);
+                direction = matches && matches[1];
+                originalRatio = self.options.viewport.height / self.options.viewport.width;
+            } else {
+                direction = ev.currentTarget.className.indexOf("vertical") !== -1 ? "v" : "h";
+            }
+
             maxWidth = overlayRect.width;
             maxHeight = overlayRect.height;
+            minLeft = overlayRect.left - boundaryRect.left;
+            minTop = overlayRect.top - boundaryRect.top;
+
+            originalBounds = Object.assign({}, self.options.viewport);
+            var left = Math.round(viewportRect.left - imageRect.left);
+            var top = Math.round(viewportRect.top - imageRect.top);
 
             if (ev.touches) {
                 var touches = ev.touches[0];
@@ -512,87 +552,263 @@
                 originalY = touches.pageY;
             }
 
-            window.addEventListener('mousemove', mouseMove);
-            window.addEventListener('touchmove', mouseMove);
-            window.addEventListener('mouseup', mouseUp);
-            window.addEventListener('touchend', mouseUp);
-            document.body.style[CSS_USERSELECT] = 'none';
+            window.addEventListener("mousemove", mouseMove);
+            window.addEventListener("touchmove", mouseMove);
+            window.addEventListener("mouseup", mouseUp);
+            window.addEventListener("touchend", mouseUp);
+            document.body.style[CSS_USERSELECT] = "none";
         }
+
+        function mirroredDragDriver(handler) {
+            return function (ev) {
+                var pageX = ev.pageX;
+                var pageY = ev.pageY;
+
+                if (ev.touches) {
+                    var touches = ev.touches[0];
+                    pageX = touches.pageX;
+                    pageY = touches.pageY;
+                }
+
+                var deltaX = pageX - originalX;
+                var deltaY = pageY - originalY;
+
+                handler.call(this, deltaX, deltaY)
+
+                originalY = pageY;
+                originalX = pageX;
+            }
+        }
+
+        function nsewDragDriver(handler) {
+            return function (ev) {
+                var pageX = ev.pageX;
+                var pageY = ev.pageY;
+
+                if (ev.touches) {
+                    var touches = ev.touches[0];
+                    pageX = touches.pageX;
+                    pageY = touches.pageY;
+                }
+
+                var deltaX = pageX - originalX;
+                var deltaY = pageY - originalY;
+
+                handler.call(this, deltaX, deltaY, originalBounds)
+            }
+        }
+
 
         function mouseMove(ev) {
-            var pageX = ev.pageX;
-            var pageY = ev.pageY;
-
             ev.preventDefault();
 
-            if (ev.touches) {
-                var touches = ev.touches[0];
-                pageX = touches.pageX;
-                pageY = touches.pageY;
-            }
-
-            var deltaX = pageX - originalX;
-            var deltaY = pageY - originalY;
-            var newHeight = self.options.viewport.height + deltaY;
-            var newWidth = self.options.viewport.width + deltaX;
-
-            if (direction === 'v' && newHeight >= minSize && newHeight <= maxHeight) {
-                css(wrap, {
-                    height: newHeight + 'px'
-                });
-
-                self.options.boundary.height += deltaY;
-                css(self.elements.boundary, {
-                    height: self.options.boundary.height + 'px'
-                });
-
-                self.options.viewport.height += deltaY;
-                css(self.elements.viewport, {
-                    height: self.options.viewport.height + 'px'
-                });
-            }
-            else if (direction === 'h' && newWidth >= minSize && newWidth <= maxWidth) {
-                css(wrap, {
-                    width: newWidth + 'px'
-                });
-
-                self.options.boundary.width += deltaX;
-                css(self.elements.boundary, {
-                    width: self.options.boundary.width + 'px'
-                });
-
-                self.options.viewport.width += deltaX;
-                css(self.elements.viewport, {
-                    width: self.options.viewport.width + 'px'
-                });
-            }
+            MOVE_HANDLERS[direction].call(self, ev);
 
             _updateOverlay.call(self);
-            _updateZoomLimits.call(self);
+            if (!self.options.resizeControls.NSEW) {
+                _updateZoomLimits.call(self);
+            }
             _updateCenterPoint.call(self);
-            _triggerUpdate.call(self);
-            originalY = pageY;
-            originalX = pageX;
+            _triggerUpdate.call(self, ev);
+
         }
+
+        function moveHandlerMirroredE(deltaX, deltaY) {
+            var newHeight = self.options.viewport.height + deltaY;
+            var newWidth = self.options.viewport.width + deltaX;
+            if (!(newHeight >= minSize && newHeight <= maxHeight)) {
+                return;
+            }
+            css(wrap, {
+                width: newWidth + "px"
+            });
+
+            self.options.boundary.width += deltaX;
+            css(self.elements.boundary, {
+                width: self.options.boundary.width + "px"
+            });
+
+            self.options.viewport.width += deltaX;
+            css(self.elements.viewport, {
+                width: self.options.viewport.width + "px"
+            });
+        }
+
+        function moveHandlerMirroredS(deltaX, deltaY) {
+            var newHeight = self.options.viewport.height + deltaY;
+            var newWidth = self.options.viewport.width + deltaX;
+            if (!(newWidth >= minSize && newWidth <= maxWidth)) {
+                return;
+            }
+            css(wrap, {
+                height: newHeight + "px"
+            });
+
+            self.options.boundary.height += deltaY;
+            css(self.elements.boundary, {
+                height: self.options.boundary.height + "px"
+            });
+
+            self.options.viewport.height += deltaY;
+            css(self.elements.viewport, {
+                height: self.options.viewport.height + "px"
+            });
+        }
+
+        function getDims(object) {
+            return ["height", "width", "top", "left"].reduce(function (dims, prop) {
+                dims[prop] = Math.round(object[prop]) + "px";
+                return dims;
+            }, {});
+        }
+
+        function setBoxSizes() {
+            var viewportDims = getDims(self.options.viewport);
+            css(wrap, viewportDims);
+            css(self.elements.viewport, viewportDims);
+            css(self.elements.boundary, getDims(self.options.boundary));
+        }
+
+        function isViewportValid(bounds) {
+            var newBounds = ["height", "width", "top", "left"].reduce(function (dims, prop) {
+                dims[prop] = bounds[prop] || self.options.viewport[prop];
+                return dims;
+            }, {});
+            return newBounds.left >= minLeft && newBounds.top >= Math.floor(minTop)
+                && (newBounds.top + newBounds.height <= Math.ceil(minTop) + Math.ceil(maxHeight))
+                && (newBounds.left + newBounds.width <= Math.ceil(minLeft) + Math.ceil(maxWidth))
+                && newBounds.width >= minSize && newBounds.height >= minSize;
+        }
+
+        function applyBounds(nextBounds) {
+            Object.keys(nextBounds).forEach(function (key) {
+                self.options.boundary[key] += nextBounds[key] - self.options.viewport[key];
+                self.options.viewport[key] = nextBounds[key];
+            });
+            setBoxSizes.call(self);
+        }
+
+        function boundsN(deltaX, deltaY, originalBounds) {
+            return { top: originalBounds.top + deltaY, height: originalBounds.height - deltaY };
+        }
+
+        function moveHandlerN(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsN(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function boundsE(deltaX, deltaY, originalBounds) {
+            return { width: originalBounds.width + deltaX }
+        }
+
+        function moveHandlerE(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsE(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function boundsS(deltaX, deltaY, originalBounds) {
+            return { height: originalBounds.height + deltaY }
+        }
+
+        function moveHandlerS(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsS(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function boundsW(deltaX, deltaY, originalBounds) {
+            return { width: originalBounds.width - deltaX, left: originalBounds.left + deltaX };
+        }
+
+        function moveHandlerW(deltaX, deltaY, originalBounds) {
+            var nextBounds = boundsW(deltaX, deltaY, originalBounds);
+            if (!isViewportValid(nextBounds)) {
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function getProportionalDelta(deltaX, deltaY, inverse) {
+            if (deltaY > deltaX * originalRatio) {
+                deltaX = inverse * deltaY / originalRatio;
+            } else {
+                deltaY = inverse * deltaX * originalRatio;
+            }
+            return { x: Math.round(deltaX), y: Math.round(deltaY) };
+        }
+
+        function cornerMoveHandler(deltaX, deltaY, inverse, handler1, handler2){
+            const delta = getProportionalDelta(deltaX, deltaY, inverse);
+            const nextBounds = Object.assign({},
+                handler1(delta.x, delta.y, originalBounds),
+                handler2(delta.x, delta.y, originalBounds));
+            if(!isViewportValid(nextBounds)){
+                return;
+            }
+            applyBounds(nextBounds);
+        }
+
+        function moveHandlerNE(deltaX, deltaY) {
+            cornerMoveHandler(deltaX, deltaY, -1, boundsN, boundsE);
+        }
+
+        function moveHandlerSE(deltaX, deltaY, newHeight, newWidth) {
+            cornerMoveHandler(deltaX, deltaY, 1, boundsS, boundsE);
+        }
+
+        function moveHandlerNW(deltaX, deltaY, originalBounds) {
+            cornerMoveHandler(deltaX, deltaY, 1, boundsN, boundsW);
+        }
+
+        function moveHandlerSW(deltaX, deltaY) {
+            cornerMoveHandler(deltaX, deltaY, -1, boundsS, boundsW);
+        }
+
+        var MOVE_HANDLERS = {
+            "h": mirroredDragDriver(moveHandlerMirroredE),
+            "v": mirroredDragDriver(moveHandlerMirroredS),
+            "n": nsewDragDriver(moveHandlerN),
+            "ne": nsewDragDriver(moveHandlerNE),
+            "e": nsewDragDriver(moveHandlerE),
+            "se": nsewDragDriver(moveHandlerSE),
+            "s": nsewDragDriver(moveHandlerS),
+            "sw": nsewDragDriver(moveHandlerSW),
+            "w": nsewDragDriver(moveHandlerW),
+            "nw": nsewDragDriver(moveHandlerNW)
+        };
+
 
         function mouseUp() {
             isDragging = false;
-            window.removeEventListener('mousemove', mouseMove);
-            window.removeEventListener('touchmove', mouseMove);
-            window.removeEventListener('mouseup', mouseUp);
-            window.removeEventListener('touchend', mouseUp);
-            document.body.style[CSS_USERSELECT] = '';
+            window.removeEventListener("mousemove", mouseMove);
+            window.removeEventListener("touchmove", mouseMove);
+            window.removeEventListener("mouseup", mouseUp);
+            window.removeEventListener("touchend", mouseUp);
+            document.body.style[CSS_USERSELECT] = "";
         }
 
         if (vr) {
-            vr.addEventListener('mousedown', mouseDown);
-            vr.addEventListener('touchstart', mouseDown);
+            vr.addEventListener("mousedown", mouseDown);
+            vr.addEventListener("touchstart", mouseDown);
         }
 
         if (hr) {
-            hr.addEventListener('mousedown', mouseDown);
-            hr.addEventListener('touchstart', mouseDown);
+            hr.addEventListener("mousedown", mouseDown);
+            hr.addEventListener("touchstart", mouseDown);
         }
+
+        handles && handles.forEach(function (handle) {
+            handle.addEventListener("mousedown", mouseDown);
+            handle.addEventListener("touchstart", mouseDown);
+        });
 
         this.elements.boundary.appendChild(wrap);
     }
@@ -628,7 +844,7 @@
             _onZoom.call(self, {
                 value: parseFloat(zoomer.value),
                 origin: new TransformOrigin(self.elements.preview),
-                viewportRect: self.elements.viewport.getBoundingClientRect(),
+                viewportRect: getInnerDimensions(self.elements.viewport),
                 transform: Transform.parse(self.elements.preview)
             });
         }
@@ -637,7 +853,7 @@
             var delta, targetZoom;
 
             if(self.options.mouseWheelZoom === 'ctrl' && ev.ctrlKey !== true){
-              return 0; 
+              return 0;
             } else if (ev.wheelDelta) {
                 delta = ev.wheelDelta / 1200; //wheelDelta min: -120 max: 120 // max x 10 x 2
             } else if (ev.deltaY) {
@@ -667,7 +883,7 @@
     function _onZoom(ui) {
         var self = this,
             transform = ui ? ui.transform : Transform.parse(self.elements.preview),
-            vpRect = ui ? ui.viewportRect : self.elements.viewport.getBoundingClientRect(),
+            vpRect = ui ? ui.viewportRect : getInnerDimensions(self.elements.viewport),
             origin = ui ? ui.origin : new TransformOrigin(self.elements.preview);
 
         function applyCss() {
@@ -757,7 +973,7 @@
         var self = this,
             scale = self._currentZoom,
             data = self.elements.preview.getBoundingClientRect(),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             transform = Transform.parse(self.elements.preview.style[CSS_TRANSFORM]),
             pc = new TransformOrigin(self.elements.preview),
             top = (vpData.top - data.top) + (vpData.height / 2),
@@ -836,10 +1052,10 @@
             if (ev.shiftKey && (ev.keyCode === UP_ARROW || ev.keyCode === DOWN_ARROW)) {
                 var zoom;
                 if (ev.keyCode === UP_ARROW) {
-                    zoom = parseFloat(self.elements.zoomer.value) + parseFloat(self.elements.zoomer.step)
+                    zoom = parseFloat(self.elements.zoomer.value) + parseFloat(self.elements.zoomer.step);
                 }
                 else {
-                    zoom = parseFloat(self.elements.zoomer.value) - parseFloat(self.elements.zoomer.step)
+                    zoom = parseFloat(self.elements.zoomer.value) - parseFloat(self.elements.zoomer.step);
                 }
                 self.setZoom(zoom);
             }
@@ -848,8 +1064,8 @@
                 var movement = parseKeyDown(ev.keyCode);
 
                 transform = Transform.parse(self.elements.preview);
-                document.body.style[CSS_USERSELECT] = 'none';
-                vpRect = self.elements.viewport.getBoundingClientRect();
+                document.body.style[CSS_USERSELECT] = "none";
+                vpRect = getInnerDimensions(self.elements.viewport);
                 keyMove(movement);
             }
 
@@ -899,12 +1115,12 @@
             }
             toggleGrabState(isDragging);
             transform = Transform.parse(self.elements.preview);
-            window.addEventListener('mousemove', mouseMove);
-            window.addEventListener('touchmove', mouseMove);
-            window.addEventListener('mouseup', mouseUp);
-            window.addEventListener('touchend', mouseUp);
-            document.body.style[CSS_USERSELECT] = 'none';
-            vpRect = self.elements.viewport.getBoundingClientRect();
+            window.addEventListener("mousemove", mouseMove);
+            window.addEventListener("touchmove", mouseMove);
+            window.addEventListener("mouseup", mouseUp);
+            window.addEventListener("touchend", mouseUp);
+            document.body.style[CSS_USERSELECT] = "none";
+            vpRect = getInnerDimensions(self.elements.viewport);
         }
 
         function mouseMove(ev) {
@@ -982,9 +1198,10 @@
     }
     var _debouncedOverlay = debounce(_updateOverlay, 500);
 
-    function _triggerUpdate() {
+    function _triggerUpdate(originalEvent) {
         var self = this,
             data = self.get();
+        data.originalEvent = originalEvent;
 
         if (!_isVisible.call(self)) {
             return;
@@ -1059,7 +1276,28 @@
         _updateOverlay.call(self);
     }
 
-    function _updateZoomLimits (initial) {
+    function getBounds(element) {
+        //How much do I miss babel? Let me list the ways.
+        var boundingClientRect = element.getBoundingClientRect()
+        return ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
+            return (copy[key] = boundingClientRect[key]) && copy;
+        }, {});
+
+    }
+
+    /**
+     * Get the elements client rect without border width because that causes zoom to be wrong
+     * @param element to get the client rect for
+     */
+    function getInnerDimensions(element) {
+        var copy = getBounds(element);
+        var computedStyles = window.getComputedStyle(element);
+        copy.width = parseInt(computedStyles.width);
+        copy.height = parseInt(computedStyles.height);
+        return copy;
+    }
+
+    function _updateZoomLimits(initial) {
         var self = this,
             minZoom = 0,
             maxZoom = self.options.maxZoom || 1.5,
@@ -1069,7 +1307,7 @@
             scale = parseFloat(zoomer.value),
             boundaryData = self.elements.boundary.getBoundingClientRect(),
             imgData = naturalImageDimensions(self.elements.img, self.data.orientation),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             minW,
             minH;
         if (self.options.enforceBoundary) {
@@ -1084,7 +1322,7 @@
 
         zoomer.min = fix(minZoom, 4);
         zoomer.max = fix(maxZoom, 4);
-        
+
         if (!initial && (scale < zoomer.min || scale > zoomer.max)) {
             _setZoomerVal.call(self, scale < zoomer.min ? zoomer.min : zoomer.max);
         }
@@ -1098,13 +1336,16 @@
     }
 
     function _bindPoints(points) {
+        if(typeof points === "function"){
+            points = points()
+        }
         if (points.length !== 4) {
             throw "Croppie - Invalid number of points supplied: " + points;
         }
         var self = this,
             pointsWidth = points[2] - points[0],
             // pointsHeight = points[3] - points[1],
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             boundRect = self.elements.boundary.getBoundingClientRect(),
             vpOffset = {
                 left: vpData.left - boundRect.left,
@@ -1128,7 +1369,7 @@
     function _centerImage() {
         var self = this,
             imgDim = self.elements.preview.getBoundingClientRect(),
-            vpDim = self.elements.viewport.getBoundingClientRect(),
+            vpDim = getInnerDimensions(self.elements.viewport),
             boundDim = self.elements.boundary.getBoundingClientRect(),
             vpLeft = vpDim.left - boundDim.left,
             vpTop = vpDim.top - boundDim.top,
@@ -1160,8 +1401,8 @@
             top = num(points[1]),
             right = num(points[2]),
             bottom = num(points[3]),
-            width = right-left,
-            height = bottom-top,
+            width = right - left,
+            height = bottom - top,
             circle = data.circle,
             canvas = document.createElement('canvas'),
             ctx = canvas.getContext('2d'),
@@ -1182,7 +1423,7 @@
             width = Math.min(width, self._originalImageWidth);
             height = Math.min(height, self._originalImageHeight);
         }
-    
+
         // console.table({ left, right, top, bottom, canvasWidth, canvasHeight });
         ctx.drawImage(this.elements.preview, left, top, width, height, startX, startY, canvasWidth, canvasHeight);
         if (circle) {
@@ -1233,7 +1474,9 @@
 
     function _replaceImage(img) {
         if (this.elements.img.parentNode) {
-            Array.prototype.forEach.call(this.elements.img.classList, function(c) { img.classList.add(c); });
+            Array.prototype.forEach.call(this.elements.img.classList, function (c) {
+                img.classList.add(c);
+            });
             this.elements.img.parentNode.replaceChild(img, this.elements.img);
             this.elements.preview = img; // if the img is attached to the DOM, they're not using the canvas
         }
@@ -1269,11 +1512,11 @@
         self.data.url = url || self.data.url;
         self.data.boundZoom = zoom;
 
-        return loadImage(url, hasExif).then(function (img) {
+        return loadImage(url, hasExif, self.options.anonymousCrossOrigin).then(function (img) {
             _replaceImage.call(self, img);
             if (!points.length) {
                 var natDim = naturalImageDimensions(img);
-                var rect = self.elements.viewport.getBoundingClientRect();
+                var rect = getInnerDimensions(self.elements.viewport);
                 var aspectRatio = rect.width / rect.height;
                 var imgAspectRatio = natDim.width / natDim.height;
                 var width, height;
@@ -1300,6 +1543,9 @@
                     points[2] * img.naturalWidth / 100,
                     points[3] * img.naturalHeight / 100
                 ];
+            } else if (typeof options.points  === "function"){
+                options.points = options.points(img.naturalWidth, img.naturalHeight);
+                points = options.points;
             }
 
             self.data.points = points.map(function (p) {
@@ -1321,7 +1567,7 @@
     function _get() {
         var self = this,
             imgData = self.elements.preview.getBoundingClientRect(),
-            vpData = self.elements.viewport.getBoundingClientRect(),
+            vpData = getInnerDimensions(self.elements.viewport),
             x1 = vpData.left - imgData.left,
             y1 = vpData.top - imgData.top,
             widthDiff = (vpData.width - self.elements.viewport.offsetWidth) / 2, //border
@@ -1363,8 +1609,8 @@
             format = opts.format,
             quality = opts.quality,
             backgroundColor = opts.backgroundColor,
-            circle = typeof opts.circle === 'boolean' ? opts.circle : (self.options.viewport.type === 'circle'),
-            vpRect = self.elements.viewport.getBoundingClientRect(),
+            circle = typeof opts.circle === "boolean" ? opts.circle : (self.options.viewport.type === "circle"),
+            vpRect = getInnerDimensions(self.elements.viewport),
             ratio = vpRect.width / vpRect.height,
             prom;
 
@@ -1394,16 +1640,15 @@
         data.backgroundColor = backgroundColor;
 
         prom = new Promise(function (resolve) {
-            switch(resultType.toLowerCase())
-            {
-                case 'rawcanvas':
+            switch (resultType.toLowerCase()) {
+                case "rawcanvas":
                     resolve(_getCanvas.call(self, data));
                     break;
-                case 'canvas':
-                case 'base64':
+                case "canvas":
+                case "base64":
                     resolve(_getBase64Result.call(self, data));
                     break;
-                case 'blob':
+                case "blob":
                     _getBlobResult.call(self, data).then(resolve);
                     break;
                 default:
@@ -1521,9 +1766,11 @@
         viewport: {
             width: 100,
             height: 100,
-            type: 'square'
+            top: 0,
+            left: 0,
+            type: "square"
         },
-        boundary: { },
+        boundary: {},
         orientationControls: {
             enabled: true,
             leftClass: '',
@@ -1531,9 +1778,11 @@
         },
         resizeControls: {
             width: true,
-            height: true
+            height: true,
+            NSEW: false
         },
-        customClass: '',
+        anonymousCrossOrigin: true,
+        customClass: "",
         showZoomer: true,
         enableZoom: true,
         enableResize: false,
@@ -1542,7 +1791,8 @@
         enforceBoundary: true,
         enableOrientation: false,
         enableKeyMovement: true,
-        update: function () { }
+        update: function () {
+        }
     };
 
     Croppie.globals = {
