@@ -746,8 +746,8 @@
         }
 
         function cornerMoveHandler(deltaX, deltaY, inverse, handler1, handler2){
-            const delta = getProportionalDelta(deltaX, deltaY, inverse);
-            const nextBounds = Object.assign({},
+            var delta = getProportionalDelta(deltaX, deltaY, inverse);
+            var nextBounds = Object.assign({},
                 handler1(delta.x, delta.y, originalBounds),
                 handler2(delta.x, delta.y, originalBounds));
             if(!isViewportValid(nextBounds)){
