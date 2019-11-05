@@ -1280,7 +1280,8 @@
         //How much do I miss babel? Let me list the ways.
         var boundingClientRect = element.getBoundingClientRect()
         return ["bottom", "height", "left", "right", "top", "width", "x", "y"].reduce(function (copy, key) {
-            return (copy[key] = boundingClientRect[key]) && copy;
+            copy[key] = boundingClientRect[key];
+            return copy;
         }, {});
 
     }
