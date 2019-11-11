@@ -1413,6 +1413,7 @@
     function mouseUp() {
       isDragging = false;
       toggleGrabState(isDragging);
+      cleanup();
       document.body.style[CSS_USERSELECT] = "";
 
       if (self.elements) {
@@ -1973,8 +1974,7 @@
     if (self.options.enableZoom) {
       self.element.removeChild(self.elements.zoomerWrap);
     }
-    self._cleanupMethods.forEach(method => {
-      debugger;
+    self._cleanupMethods.forEach(function(method) {
       method.call(self);
     });
 
