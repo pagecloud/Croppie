@@ -1,10 +1,11 @@
 {
   "name": "croppie",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "A simple javascript image cropper",
   "main": "croppie.js",
   "devDependencies": {
     "gh-pages": "^0.11.0",
+    "jquery": "^3.4.1",
     "mocha": "2.4.5",
     "uglify-js": "3.3.15"
   },

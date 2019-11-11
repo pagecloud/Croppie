@@ -2,7 +2,7 @@
  * Croppie
  * Copyright 2018
  * Foliotek
- * Version: 2.6.2
+ * Version: 2.6.3
  *************************/
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -360,6 +360,10 @@
             customViewportClass = self.options.viewport.type ? 'cr-vp-' + self.options.viewport.type : null,
             boundary, img, viewport, overlay, bw, bh;
 
+        // An array of methods that individual handlers (resize, draggable) add
+        // to that get called on destroy
+        self._cleanupMethods = [];
+
         self.options.useCanvas = self.options.enableOrientation || _hasExif.call(self);
         // Properties on class
         self.data = {};
@@ -477,6 +481,8 @@
         var hr;
         var handles;
         var originalBounds;
+
+        self._cleanupMethods.push(cleanup);
 
         addClass(wrap, "cr-resizer");
         css(wrap, {
@@ -608,9 +614,10 @@
             if (!self.options.resizeControls.NSEW) {
                 _updateZoomLimits.call(self);
             }
-            _updateCenterPoint.call(self);
-            _triggerUpdate.call(self, ev);
-
+            if (self.elements) {
+                _updateCenterPoint.call(self);
+                _triggerUpdate.call(self, ev);
+            }
         }
 
         function moveHandlerMirroredE(deltaX, deltaY) {
@@ -785,13 +792,16 @@
             "nw": nsewDragDriver(moveHandlerNW)
         };
 
-
-        function mouseUp() {
-            isDragging = false;
+        function cleanup() {
             window.removeEventListener("mousemove", mouseMove);
             window.removeEventListener("touchmove", mouseMove);
             window.removeEventListener("mouseup", mouseUp);
             window.removeEventListener("touchend", mouseUp);
+          }
+
+        function mouseUp() {
+            isDragging = false;
+            cleanup();
             document.body.style[CSS_USERSELECT] = "";
         }
 
@@ -1018,6 +1028,8 @@
             vpRect,
             transform;
 
+        self._cleanupMethods.push(cleanup);
+
         function assignTransformCoordinates(deltaX, deltaY) {
             var imgRect = self.elements.preview.getBoundingClientRect(),
                 top = transform.y + deltaY,
@@ -1094,8 +1106,10 @@
             css(self.elements.preview, newCss);
             _updateOverlay.call(self);
             document.body.style[CSS_USERSELECT] = '';
-            _updateCenterPoint.call(self);
-            _triggerUpdate.call(self);
+            if (self.elements) {
+                _updateCenterPoint.call(self);
+                _triggerUpdate.call(self);
+            }
             originalDistance = 0;
         }
 
@@ -1165,16 +1179,22 @@
             originalX = pageX;
         }
 
+        function cleanup() {
+            window.removeEventListener("mousemove", mouseMove);
+            window.removeEventListener("touchmove", mouseMove);
+            window.removeEventListener("mouseup", mouseUp);
+            window.removeEventListener("touchend", mouseUp);
+        }
+
         function mouseUp() {
             isDragging = false;
             toggleGrabState(isDragging);
-            window.removeEventListener('mousemove', mouseMove);
-            window.removeEventListener('touchmove', mouseMove);
-            window.removeEventListener('mouseup', mouseUp);
-            window.removeEventListener('touchend', mouseUp);
+            cleanup();
             document.body.style[CSS_USERSELECT] = '';
-            _updateCenterPoint.call(self);
-            _triggerUpdate.call(self);
+            if (self.elements) {
+                _updateCenterPoint.call(self);
+                _triggerUpdate.call(self);
+            }
             originalDistance = 0;
         }
 
@@ -1685,6 +1705,9 @@
         if (self.options.enableZoom) {
             self.element.removeChild(self.elements.zoomerWrap);
         }
+        self._cleanupMethods.forEach(function(method) {
+            method.call(self);
+        });
         delete self.elements;
     }
 
