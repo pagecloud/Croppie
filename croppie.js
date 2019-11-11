@@ -2,7 +2,7 @@
  * Croppie
  * Copyright 2018
  * Foliotek
- * Version: 2.6.2
+ * Version: 2.6.3
  *************************/
 (function(root, factory) {
   if (typeof define === "function" && define.amd) {
@@ -538,6 +538,10 @@
       bw,
       bh;
 
+    // An array of methods that individual handlers (resize, draggable) add
+    // to that get called on destroy
+    self._cleanupMethods = [];
+
     self.options.useCanvas =
       self.options.enableOrientation || _hasExif.call(self);
     // Properties on class
@@ -658,6 +662,8 @@
     var hr;
     var handles;
     var originalBounds;
+
+    self._cleanupMethods.push(cleanup);
 
     addClass(wrap, "cr-resizer");
     css(wrap, {
@@ -986,12 +992,16 @@
       nw: nsewDragDriver(moveHandlerNW)
     };
 
-    function mouseUp() {
-      isDragging = false;
+    function cleanup() {
       window.removeEventListener("mousemove", mouseMove);
       window.removeEventListener("touchmove", mouseMove);
       window.removeEventListener("mouseup", mouseUp);
       window.removeEventListener("touchend", mouseUp);
+    }
+
+    function mouseUp() {
+      isDragging = false;
+      cleanup();
       document.body.style[CSS_USERSELECT] = "";
     }
 
@@ -1223,6 +1233,8 @@
       vpRect,
       transform;
 
+    self._cleanupMethods.push(cleanup);
+
     function assignTransformCoordinates(deltaX, deltaY) {
       var imgRect = self.elements.preview.getBoundingClientRect(),
         top = transform.y + deltaY,
@@ -1391,13 +1403,16 @@
       originalX = pageX;
     }
 
-    function mouseUp() {
-      isDragging = false;
-      toggleGrabState(isDragging);
+    function cleanup() {
       window.removeEventListener("mousemove", mouseMove);
       window.removeEventListener("touchmove", mouseMove);
       window.removeEventListener("mouseup", mouseUp);
       window.removeEventListener("touchend", mouseUp);
+    }
+
+    function mouseUp() {
+      isDragging = false;
+      toggleGrabState(isDragging);
       document.body.style[CSS_USERSELECT] = "";
 
       if (self.elements) {
@@ -1958,6 +1973,11 @@
     if (self.options.enableZoom) {
       self.element.removeChild(self.elements.zoomerWrap);
     }
+    self._cleanupMethods.forEach(method => {
+      debugger;
+      method.call(self);
+    });
+
     delete self.elements;
   }
 
