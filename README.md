@@ -43,8 +43,7 @@ First, thanks for contributing.  This project is difficult to maintain with one 
 If you're looking for a simple server to load the demo page, I use https://github.com/tapio/live-server.
 
 #### Minifying
-`npm install -g uglify-js`
-`uglifyjs croppie.js -c -m -r '$,require,exports' -o croppie.min.js`
+`npm run uglify`
 
 #### Releasing a new version
 For the most part, you shouldn't worry about these steps unless you're the one handling the release.  Please don't bump the release and don't minify/uglify in a PR.  That just creates merge conflicts when merging.  Those steps will be peformed when the release is created.
