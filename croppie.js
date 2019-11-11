@@ -1705,6 +1705,9 @@
         if (self.options.enableZoom) {
             self.element.removeChild(self.elements.zoomerWrap);
         }
+        self._cleanupMethods.forEach(function(method) {
+            method.call(self);
+        });
         delete self.elements;
     }
 
