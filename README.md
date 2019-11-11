@@ -1,3 +1,4 @@
+# THIS IS A FORK - most of this isn't used
 # Croppie - A Javascript Image Cropper
 
 
